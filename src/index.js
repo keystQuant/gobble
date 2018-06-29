@@ -1,5 +1,7 @@
-const CONFIG = require('./config.js')
+const config = require('./config.js')
+const cache = require('./cache.js')
 
 module.exports = {
-  CONFIG: CONFIG
+  CONFIG: config,
+  CACHE: cache
 }
