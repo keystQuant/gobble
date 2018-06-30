@@ -32,6 +32,7 @@ sudo systemctl restart nginx
 
 # changing firewall options
 sudo ufw allow 'Nginx Full'
+sudo ufw allow 3000
 
 # last step configuring uwsgi and nginx
 sudo systemctl enable nginx
