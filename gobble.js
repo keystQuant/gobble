@@ -7,8 +7,8 @@ const { CONFIG, CACHE } = require('./src')
 const cache = new CACHE.RedisClient()
 const app = express()
 
-const server = app.listen(3000, async () => {
-  console.log('Gobble server started on port 3000')
+const server = app.listen(8080, async () => {
+  console.log('Gobble server started on port 8080')
   let cacheAuth = await cache.auth()
   console.log(`Cache connected: ${cacheAuth}`)
 })

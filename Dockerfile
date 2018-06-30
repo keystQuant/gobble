@@ -18,7 +18,7 @@ RUN npm install -g pm2
 COPY package.json /src/package.json
 RUN cd /src; npm install
 COPY . /src
-EXPOSE 3000
+EXPOSE 8080
 WORKDIR /src
 
 ENTRYPOINT ["dumb-init", "--"]

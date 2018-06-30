@@ -7,7 +7,7 @@ services:
     links:
       - gobble:gobble
     ports:
-      - 3000:80
+      - 8080:3000
     depends_on:
       - gobble
 
@@ -15,4 +15,4 @@ services:
     container_name: gobble_server
     build: .
     ports:
-      - 3000
+      - 8080
