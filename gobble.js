@@ -17,6 +17,8 @@ app.get('/', async (req, res) => {
   res.send('DONE')
 })
 
+///////////////////////
+// start test endpoints
 app.get('/set-cache/:keyval', async (req, res) => {
   let keyval = req.params.keyval.split(':')
   let key = keyval[0]
@@ -30,3 +32,5 @@ app.get('/get-cache/:key', async (req, res) => {
   let val = await cache.getKey(key)
   res.send(val)
 })
+// end test endpoints
+///////////////////////
