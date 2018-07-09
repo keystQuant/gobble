@@ -21,7 +21,7 @@ npm install # install all npm packages (including Puppeteer)
 sudo npm install -g pm2
 
 # run your Express Gobble server
-# pm2 start ./gobble.js
+pm2 start ./gobble.js
 
 ### install Nginx ###
 sudo apt-get install nginx

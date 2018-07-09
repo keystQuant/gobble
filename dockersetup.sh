@@ -1,5 +1,6 @@
 #! /bin/bash
 
+sudo ufw allow 3000 # expose port 3000
 
 # install Docker on server
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
@@ -20,7 +21,7 @@ done
 # create necessary images
 docker build --tag gobble-server:app .
 cd nginx
-docker build --tag gobble_nginx:app .
+docker build --tag gobble-nginx:app .
 cd ../
 
 # run docker-compose up
