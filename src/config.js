@@ -35,7 +35,7 @@ const CONFIG = {
         'cache': '202.182.113.123',
         'gateway': '149.28.25.177',
         'gobble': '149.28.18.34',
-        'mined': '45.32.42.30'
+        'mined': '108.160.138.124'
     },
 
     'initial_deploy_pw': {
@@ -44,7 +44,7 @@ const CONFIG = {
         'cache': '3Y#faMd91)@)w%LK',
         'gateway': '(8tLXaZB]U+5@9=H',
         'gobble': 'Qt(5tTwsDD7raEAj',
-        'mined': '{fR92qVn]drQb8hg'
+        'mined': 'Mu$7YYjAVz[{Nu{j'
     }
 
 }

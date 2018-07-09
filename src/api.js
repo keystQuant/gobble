@@ -8,6 +8,7 @@ class API {
 
   constructor() {
     this.datesAPI = 'http://' + GATEWAY_IP + '/stock-api/date/?page='
+    this.statesAPI = 'http://' + GATEWAY_IP + '/hidden-api/gateway-states/'
   }
 
   async getDates(pageNum, url=false) {
@@ -39,6 +40,18 @@ class API {
       }
     }
     return allDates
+  }
+
+  async saveState(taskName, log) {
+    let todayDate = new Date().toISOString().slice(0, 10).replace(/-/gi, '')
+    let stateData = {
+      date: todayData,
+      task_name: taskName,
+      state: 'P',
+      log: log
+    }
+    let res = await axios.post(this.statesAPI, stateData)
+    return res
   }
 
 }

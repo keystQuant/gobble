@@ -16,7 +16,8 @@ const {
 
 const cache = new CACHE.RedisClient()
 const logger = new LOGGER.CacheLogger(cache)
-const taskSender = new TASKSENDER.TaskSender(logger, 'local')
+const taskSender = new TASKSENDER.TaskSender(logger, 'remote') // change to 'local' when testing
+const api = new API.API()
 
 const app = express()
 
@@ -30,8 +31,9 @@ app.get('/', async (req, res) => {
   res.send('DONE')
 })
 
-///////////////////////
-// start test endpoints
+//////////////////////////
+// start test endpoints //
+//////////////////////////
 app.get('/set-cache/:keyval', async (req, res) => {
   let keyval = req.params.keyval.split(':')
   let key = keyval[0]
@@ -55,8 +57,9 @@ app.get('/del-cache/:key', async (req, res) => {
   delRes = delRes ? 'DONE' : 'ERROR'
   res.send(delRes)
 })
-// end test endpoints
-///////////////////////
+////////////////////////
+// end test endpoints //
+////////////////////////
 
 // functions here
 const pollingSignal = async (signal) => {
@@ -240,4 +243,22 @@ app.get('/MASS_BUYSELL_CRAWL', async (req, res) => {
 
 app.get('/MASS_FACTOR_CRAWL', async (req, res) => {
   massCrawlTask(req, req)
+})
+
+// crawling all data once (daily, every 30 minutes if date updated)
+app.get('/DAILY_CRAWL_ALL', async (req, res) => {
+  let taskName = req.url.split('/')[1]
+  let counterKey = 'DAILY_CRAWL_ALL_TEST_COUNTER'
+  // setting counter key to cache
+  let counter = 1
+  let keyExists = await cache.keyExists(counterKey)
+  if (!keyExists) {
+    await cache.setKey(counterKey, counter)
+  } else {
+    let existingCounter = await cache.getKey(counterKey)
+    counter = existingCounter + 1
+    await cache.setKey(counterKey, counter)
+  }
+  // saving log data
+  await api.saveState(taskName, 'ran test, current counter: ' + counter)
 })
