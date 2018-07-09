@@ -45,7 +45,7 @@ class API {
   async saveState(taskName, log) {
     let todayDate = new Date().toISOString().slice(0, 10).replace(/-/gi, '')
     let stateData = {
-      date: todayData,
+      date: todayDate,
       task_name: taskName,
       state: 'P',
       log: log

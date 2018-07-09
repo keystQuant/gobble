@@ -256,9 +256,11 @@ app.get('/DAILY_CRAWL_ALL', async (req, res) => {
     await cache.setKey(counterKey, counter)
   } else {
     let existingCounter = await cache.getKey(counterKey)
-    counter = existingCounter + 1
+    counter = parseInt(existingCounter) + 1
     await cache.setKey(counterKey, counter)
   }
   // saving log data
   await api.saveState(taskName, 'ran test, current counter: ' + counter)
+  res.status(200)
+  res.send('DONE')
 })
