@@ -62,6 +62,27 @@ app.get('/del-cache/:key', async (req, res) => {
 ////////////////////////
 
 // functions here
+const runningTask = async (taskName, res) => {
+  let taskStartKey = `${taskName}_RUNNING`
+  let taskStartKeyExists = await cache.keyExists(taskStartKey)
+  if (taskStartKeyExists) {
+    let taskStartKeyValue = await cache.getKey(taskStartKey)
+    if (taskStartKeyValue == 'RUNNING') {
+      res.status(501)
+      res.send('PROCESS_ALREADY_RUNNING')
+    } else if (taskStartKeyValue == 'STOPPED') {
+      await cache.setKey(taskStartKey, 'RUNNING')
+    }
+  } else {
+    await cache.setKey(taskStartKey, 'RUNNING')
+  }
+}
+
+const endingTask = async (taskName) => {
+  let taskStartKey = `${taskName}_RUNNING`
+  cache.setKey(taskStartKey, 'STOPPED')
+}
+
 const pollingSignal = async (signal) => {
   console.log('polling gateway for start signal')
   let startSignal = 'WAIT'
@@ -80,6 +101,7 @@ const pollingSignal = async (signal) => {
 const massCrawlTask = async (req, res) => {
   // 1. define taskName and dataType
   let taskName = req.url.split('/')[1]
+  await runningTask(taskName, res)
   let dataType = taskName.split('_')[1]
 
   console.log(`${taskName} task received`)
@@ -115,7 +137,7 @@ const massCrawlTask = async (req, res) => {
 
   // 1. start fnguide puppet
   let fn = new FNGUIDE.Puppet(taskName)
-  await fn.startBrowser(false, 100)
+  await fn.startBrowser(true, 100) // set to false when 'local'
   .then( response => { console.log(response) })
   .catch( error => { res.send(error) })
   // 2. login to fnguide as user
@@ -184,6 +206,7 @@ const massCrawlTask = async (req, res) => {
 
   status = 'DONE'
   console.log(`${taskName} task done`)
+  await endingTask(taskName)
   res.status(200)
   res.send(status)
 }
@@ -196,7 +219,7 @@ app.get('/MASS_DATE_CRAWL', async (req, res) => {
   let taskName = req.url.split('/')[1]
   // 2. start fnguide puppet
   let fn = new FNGUIDE.Puppet(taskName)
-  await fn.startBrowser(false, 100)
+  await fn.startBrowser(true, 100) // set to false when 'local'
   .then( response => { console.log(response) })
   .catch( error => { res.send(error) })
   // 3. login to fnguide as user
@@ -248,19 +271,33 @@ app.get('/MASS_FACTOR_CRAWL', async (req, res) => {
 // crawling all data once (daily, every 30 minutes if date updated)
 app.get('/DAILY_CRAWL_ALL', async (req, res) => {
   let taskName = req.url.split('/')[1]
-  let counterKey = 'DAILY_CRAWL_ALL_TEST_COUNTER'
-  // setting counter key to cache
-  let counter = 1
-  let keyExists = await cache.keyExists(counterKey)
-  if (!keyExists) {
-    await cache.setKey(counterKey, counter)
-  } else {
-    let existingCounter = await cache.getKey(counterKey)
-    counter = parseInt(existingCounter) + 1
-    await cache.setKey(counterKey, counter)
-  }
-  // saving log data
-  await api.saveState(taskName, 'ran test, current counter: ' + counter)
+  await runningTask(taskName, res)
+
+  // 1. start fnguide puppet
+  let fn = new FNGUIDE.Puppet('MASS_INDEX_CRAWL')
+  await fn.startBrowser(true, 100) // set to false when 'local'
+  .then( response => { console.log(response) })
+  .catch( error => { res.send(error) })
+  // 2. login to fnguide as user
+  await fn.login()
+  .then( response => {
+    // pass
+  })
+  .catch( error => {
+    res.status(501)
+    res.send(error)
+  })
+
+  // get mass index API and close browser
+  let crawledData = await fn.massIndexCrawl('20180705')
+  // save list data to cache
+  let p = new PROCESSOR.Processor(crawledData)
+  let processedData = await p.processMassIndex('20180705')
+
+  let testData = processedData[1]
+
+  await api.saveState(taskName, testData)
+  await endingTask(taskName)
   res.status(200)
   res.send('DONE')
 })
