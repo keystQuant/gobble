@@ -101,7 +101,7 @@ const pollingSignal = async (signal) => {
 const massCrawlTask = async (req, res) => {
   // 1. define taskName and dataType
   let taskName = req.url.split('/')[1]
-  await runningTask(taskName, res)
+  // await runningTask(taskName, res)
   let dataType = taskName.split('_')[1]
 
   console.log(`${taskName} task received`)
@@ -206,7 +206,7 @@ const massCrawlTask = async (req, res) => {
 
   status = 'DONE'
   console.log(`${taskName} task done`)
-  await endingTask(taskName)
+  // await endingTask(taskName)
   res.status(200)
   res.send(status)
 }
@@ -271,7 +271,7 @@ app.get('/MASS_FACTOR_CRAWL', async (req, res) => {
 // crawling all data once (daily, every 30 minutes if date updated)
 app.get('/DAILY_CRAWL_ALL', async (req, res) => {
   let taskName = req.url.split('/')[1]
-  await runningTask(taskName, res)
+  // await runningTask(taskName, res)
 
   // 1. start fnguide puppet
   let fn = new FNGUIDE.Puppet('MASS_INDEX_CRAWL')
@@ -297,7 +297,7 @@ app.get('/DAILY_CRAWL_ALL', async (req, res) => {
   let testData = processedData[1]
 
   await api.saveState(taskName, testData)
-  await endingTask(taskName)
+  // await endingTask(taskName)
   res.status(200)
   res.send('DONE')
 })
