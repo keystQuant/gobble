@@ -16,8 +16,8 @@ const {
 } = require('./src')
 
 const IP = CONFIG.ip.gateway
-const RUN_ENV = 'local' // change to 'local' when testing
-const RUN_HEADLESS = false // change to 'false' when local
+const RUN_ENV = 'remote' // change to 'local' when testing
+const RUN_HEADLESS = true // change to 'false' when local
 
 const cache = new CACHE.RedisClient()
 const logger = new LOGGER.CacheLogger(cache)
