@@ -229,7 +229,7 @@ app.get('/MASS_DATE_CRAWL', async (req, res) => {
   })
   .catch( error => {
     logger.setCacheLog(taskName, 0, false)
-    await fn.done()
+    fn.done()
     res.status(501) // not implemented error
     res.send(error)
   })
@@ -285,7 +285,7 @@ app.get('/DAILY_CRAWL_ALL', async (req, res) => {
     // pass
   })
   .catch( error => {
-    await fn.done()
+    fn.done()
     res.status(501)
     res.send(error)
   })
