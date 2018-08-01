@@ -7,12 +7,15 @@ services:
     links:
       - gobble:gobble
     ports:
-      - 8080:3000
+      - 3000:80
     depends_on:
       - gobble
 
   gobble:
     container_name: gobble_server
     build: .
+    environment:
+      - RUN_ENV=remote
+      - RUN_HEADLESS=true
     ports:
       - 8080

@@ -6,7 +6,9 @@
   "scripts": {
     "test": "jest",
     "serve": "nodemon ./gobble.js --exec babel-node --presets env,stage-2",
-    "start": "node ./gobble.js"
+    "start": "node ./gobble.js",
+    "lint:src": "eslint ./src --ext .js --fix",
+    "lint:gobble": "eslint . --ext .js --fix"
   },
   "repository": "git+https://github.com/keystQuant/gobble.git",
   "author": "peepee",
@@ -20,14 +22,21 @@
     "axios": "^0.18.0",
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.3",
+    "babel-eslint": "^8.2.6",
     "babel-jest": "^23.2.0",
     "babel-preset-env": "^1.7.0",
     "babel-preset-stage-2": "^6.24.1",
+    "eslint": "^5.2.0",
+    "eslint-config-airbnb": "^17.0.0",
+    "eslint-config-airbnb-base": "^13.0.0",
+    "eslint-loader": "^2.1.0",
+    "eslint-plugin-import": "^2.13.0",
     "express": "^4.16.3",
     "jest": "^23.2.0",
     "json": "^9.0.6",
     "nodemon": "^1.17.5",
     "puppeteer": "^1.5.0",
+    "raven": "^2.6.3",
     "redis": "^2.8.0",
     "yarn": "^1.7.0"
   }

@@ -15,11 +15,11 @@ ADD https://github.com/Yelp/dumb-init/releases/download/v1.2.0/dumb-init_1.2.0_a
 RUN chmod +x /usr/local/bin/dumb-init
 
 RUN npm install -g pm2
-COPY package.json /src/package.json
-RUN cd /src; npm install
-COPY . /src
+COPY package.json /gobbleapp/package.json
+RUN cd /gobbleapp; npm install
+COPY . /gobbleapp
 EXPOSE 8080
-WORKDIR /src
+WORKDIR /gobbleapp
 
 ENTRYPOINT ["dumb-init", "--"]
 CMD pm2 start --no-daemon gobble.js
