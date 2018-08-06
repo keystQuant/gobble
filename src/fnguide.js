@@ -23,6 +23,8 @@ const URL = {
   MKTCAP_PAGE: 'http://www.fnguide.com/fgdd/StkItemDateCap#tab=D&market=0',
   API: {
     date: 'http://www.fnguide.com/api/Fgdd/StkIndMByTimeGrdData?IN_MULTI_VALUE=CJA005930%2CCII.001&IN_START_DT=20000101&IN_END_DT={0}&IN_DATE_TYPE=D&IN_ADJ_YN=Y',
+    kospi_tickers: 'http://www.fnguide.com/api/Fgdd/StkIndByTimeGrdDataDate?IN_SEARCH_DT={0}&IN_SEARCH_TYPE=J&IN_KOS_VALUE=1',
+    kosdaq_tickers: 'http://www.fnguide.com/api/Fgdd/StkIndByTimeGrdDataDate?IN_SEARCH_DT={0}&IN_SEARCH_TYPE=J&IN_KOS_VALUE=2',
     index: 'http://www.fnguide.com/api/Fgdd/StkIndByTimeGrdDataDate?IN_SEARCH_DT={0}&IN_SEARCH_TYPE=I&IN_KOS_VALUE=0',
     etf: 'http://www.fnguide.com/api/Fgdd/StkEtfGrdDataDate?IN_TRD_DT={0}&IN_MKT_GB=0',
     ohlcv: 'http://www.fnguide.com/api/Fgdd/StkIndByTimeGrdDataDate?IN_SEARCH_DT={0}&IN_SEARCH_TYPE=J&IN_KOS_VALUE=0',
@@ -37,8 +39,8 @@ class Puppet {
     this.taskName = taskName;
 
     // user id and pw
-    this.id = 'flex80';
-    this.pw = '80_sangbum';
+    this.id = 'keystone2016';
+    this.pw = 'keystone2016';
 
     // width and height definitions for non-headless mode
     this.width = 1920;
@@ -129,6 +131,42 @@ class Puppet {
     });
 
     return dateData;
+  }
+
+  async getKospiTickers() {
+    const page = this.page;
+
+    // set headers to fool Fnguide
+    await page.setExtraHTTPHeaders({
+      Referer: 'http://www.fnguide.com/fgdd/StkIndByTime',
+      'X-Requested-With': 'XMLHttpRequest',
+    });
+    const kospiTickersURL = URL.API.kospi_tickers.format(this.todayDate);
+    await page.goto(kospiTickersURL);
+    const kospiTickersData = await page.evaluate(() => {
+      const data = JSON.parse(document.querySelector('body').innerText);
+      return data
+    });
+
+    return kospiTickersData;
+  }
+
+  async getKosdaqTickers() {
+    const page = this.page;
+
+    // set headers to fool Fnguide
+    await page.setExtraHTTPHeaders({
+      Referer: 'http://www.fnguide.com/fgdd/StkIndByTime',
+      'X-Requested-With': 'XMLHttpRequest',
+    });
+    const kosdaqTickersURL = URL.API.kosdaq_tickers.format(this.todayDate);
+    await page.goto(kosdaqTickersURL);
+    const kosdaqTickersData = await page.evaluate(() => {
+      const data = JSON.parse(document.querySelector('body').innerText);
+      return data
+    });
+
+    return kosdaqTickersData;
   }
 
   async massIndexCrawl(date) {

@@ -38,7 +38,7 @@ const api = new API.API();
 
 const app = express();
 
-const server = app.listen(8080, async () => {
+app.listen(8080, async () => {
   console.log('Gobble server started on port 8080');
   const cacheAuth = await cache.auth();
   console.log(`Cache connected: ${cacheAuth}`);
@@ -94,16 +94,17 @@ const runningTask = async (taskName, res) => {
   const taskStartKeyExists = await cache.keyExists(taskStartKey);
   if (taskStartKeyExists) {
     const taskStartKeyValue = await cache.getKey(taskStartKey);
-    if (taskStartKeyValue == 'RUNNING') {
+    if (taskStartKeyValue === 'RUNNING') {
       res.status(501);
       res.send('PROCESS_ALREADY_RUNNING');
       return 'KILL';
-    } if (taskStartKeyValue == 'STOPPED') {
+    } if (taskStartKeyValue === 'STOPPED') {
       await cache.setKey(taskStartKey, 'RUNNING');
     }
   } else {
     await cache.setKey(taskStartKey, 'RUNNING');
   }
+  return true;
 };
 
 const endingTask = async (taskName) => {
@@ -117,7 +118,7 @@ const pollingSignal = async (signal) => {
   const signalExists = await cache.keyExists(signal);
   if (signalExists) {
     const signalMSG = await cache.getKey(signal);
-    if (signalMSG == 'START') {
+    if (signalMSG === 'START') {
       startSignal = 'START';
     }
   } else {
@@ -135,7 +136,7 @@ const StartFnBrowser = async (req, res, taskName) => {
   // 3. login to fnguide as user
   await fn.login()
     .then((response) => {
-    // pass
+      console.log(response);
     })
     .catch((error) => {
       logger.setCacheLog(taskName, 0, false);
@@ -153,7 +154,7 @@ const massDateCrawlTask = async (req, res, fn = 'NONE') => {
   const taskName = req.url.split('/')[1];
 
   // 2. start fnguide puppet
-  if (fn == 'NONE') {
+  if (fn === 'NONE') {
     fn = await StartFnBrowser(req, res, taskName);
   }
 
@@ -177,9 +178,69 @@ const massDateCrawlTask = async (req, res, fn = 'NONE') => {
   return fn; // return fnguide browser so process can turn off
 };
 
+const setKospiTickersTask = async (req, res, fn = 'NONE') => {
+  console.log('SET_KOSPI_TICKERS task received');
+  // 1. define taskName
+  const taskName = req.url.split('/')[1];
+
+  // 2. start fnguide puppet
+  if (fn === 'NONE') {
+    fn = await StartFnBrowser(req, res, taskName);
+  }
+
+  // 3. get kospi tickers API and close browser
+  const kospiTickersData = await fn.getKospiTickers();
+
+  // 4. save list data to cache
+  const p = new PROCESSOR.Processor(kospiTickersData);
+  const tickersData = await p.processKospiTickers();
+
+  await cache.setList(tickersData);
+  // 5. send data task to gateway server (SAVE_KOSPI_TICKERS)
+  await taskSender.setCurrentTask(taskName);
+  await taskSender.sendNextTask('SAVE_KOSPI_TICKERS');
+
+  // log end process
+  await logger.setCacheLog(taskName, 1, false);
+
+  console.log('SET_KOSPI_TICKERS task done');
+
+  return fn; // return fnguide browser so process can turn off
+};
+
+const setKosdaqTickersTask = async (req, res, fn = 'NONE') => {
+  console.log('SET_KOSDAQ_TICKERS task received');
+  // 1. define taskName
+  const taskName = req.url.split('/')[1];
+
+  // 2. start fnguide puppet
+  if (fn === 'NONE') {
+    fn = await StartFnBrowser(req, res, taskName);
+  }
+
+  // 3. get kospi tickers API and close browser
+  const kosdaqTickersData = await fn.getKosdaqTickers();
+
+  // 4. save list data to cache
+  const p = new PROCESSOR.Processor(kosdaqTickersData);
+  const tickersData = await p.processKosdaqTickers();
+
+  await cache.setList(tickersData);
+  // 5. send data task to gateway server (SAVE_KOSDAQ_TICKERS)
+  await taskSender.setCurrentTask(taskName);
+  await taskSender.sendNextTask('SAVE_KOSDAQ_TICKERS');
+
+  // log end process
+  await logger.setCacheLog(taskName, 1, false);
+
+  console.log('SET_KOSDAQ_TICKERS task done');
+
+  return fn; // return fnguide browser so process can turn off
+};
+
 const massCrawlTask = async (req, res, fn = 'NONE', taskName = 'NONE') => {
   // 1. define taskName and dataType
-  if (taskName == 'NONE') {
+  if (taskName === 'NONE') {
     taskName = req.url.split('/')[1];
   }
   // await runningTask(taskName, res)
@@ -198,14 +259,14 @@ const massCrawlTask = async (req, res, fn = 'NONE', taskName = 'NONE') => {
   await taskSender.sendNextTask(setDatesTask);
 
   let startSignal = await pollingSignal(signal);
-  while (startSignal == 'WAIT') {
+  while (startSignal === 'WAIT') {
     startSignal = await pollingSignal(signal);
   }
   // delete signal after polling
   await cache.delKey(signal);
 
   const dates = await cache.getList(datesListKey);
-  if (dates.length == 0) {
+  if (dates.length === 0) {
     console.log('NO DATE TO UPDATE');
     console.log(`${taskName} task done`);
   }
@@ -213,32 +274,32 @@ const massCrawlTask = async (req, res, fn = 'NONE', taskName = 'NONE') => {
   // common puppet tasks:
 
   // 1. start fnguide puppet
-  if (fn == 'NONE') {
+  if (fn === 'NONE') {
     fn = await StartFnBrowser(req, res, taskName);
   }
 
   for (const date of dates) {
     let processedData = '';
 
-    if (taskName == 'MASS_INDEX_CRAWL') {
+    if (taskName === 'MASS_INDEX_CRAWL') {
       // get mass index API and close browser
       const crawledData = await fn.massIndexCrawl(date);
       // save list data to cache
       const p = new PROCESSOR.Processor(crawledData);
       processedData = await p.processMassIndex(date);
-    } else if (taskName == 'MASS_OHLCV_CRAWL') {
+    } else if (taskName === 'MASS_OHLCV_CRAWL') {
       // get mass index API and close browser
       const crawledData = await fn.massOHLCVCrawl(date);
       // save list data to cache
       const p = new PROCESSOR.Processor(crawledData);
       processedData = await p.processMassOHLCV(date);
-    } else if (taskName == 'MASS_BUYSELL_CRAWL') {
+    } else if (taskName === 'MASS_BUYSELL_CRAWL') {
       // get mass index API and close browser
       const crawledData = await fn.massBuysellCrawl(date);
       // save list data to cache
       const p = new PROCESSOR.Processor(crawledData);
       processedData = await p.processMassBuysell(date);
-    } else if (taskName == 'MASS_FACTOR_CRAWL') {
+    } else if (taskName === 'MASS_FACTOR_CRAWL') {
       // get mass index API and close browser
       const crawledData = await fn.massFactorCrawl(date);
       // save list data to cache
@@ -255,13 +316,13 @@ const massCrawlTask = async (req, res, fn = 'NONE', taskName = 'NONE') => {
     await logger.setMassCacheLog(taskName, date);
 
     let sleepURL = '';
-    if (RUN_ENV == 'remote') {
+    if (RUN_ENV === 'remote') {
       sleepURL = `http://${IP}/hidden-api/legacy-task/?type=TIME_SLEEP`;
-    } else if (RUN_ENV == 'local') {
+    } else if (RUN_ENV === 'local') {
       sleepURL = 'http://127.0.0.1:8000/hidden-api/legacy-task/?type=TIME_SLEEP';
     }
     const sleepStatus = await axios.get(sleepURL);
-    if (sleepStatus.data.status == 'DONE') {
+    if (sleepStatus.data.status === 'DONE') {
       console.log(`data crawled success: ${date}`);
     }
   }
@@ -276,6 +337,20 @@ const massCrawlTask = async (req, res, fn = 'NONE', taskName = 'NONE') => {
 // //// REAL TASK API'S START HERE //////
 app.get('/MASS_DATE_CRAWL', async (req, res) => {
   const fnBrowser = await massDateCrawlTask(req, res, 'NONE');
+  await fnBrowser.done();
+  res.status(200);
+  res.send('DONE');
+});
+
+app.get('/SET_KOSPI_TICKERS', async (req, res) => {
+  const fnBrowser = await setKospiTickersTask(req, res, 'NONE');
+  await fnBrowser.done();
+  res.status(200);
+  res.send('DONE');
+});
+
+app.get('/SET_KOSDAQ_TICKERS', async (req, res) => {
+  const fnBrowser = await setKosdaqTickersTask(req, res, 'NONE');
   await fnBrowser.done();
   res.status(200);
   res.send('DONE');
@@ -326,15 +401,15 @@ app.get('/DAILY_CRAWL_ALL', async (req, res) => {
 
   // 2. check most recent db updates
   let updatesURL = '';
-  if (RUN_ENV == 'remote') {
+  if (RUN_ENV === 'remote') {
     updatesURL = `http://${IP}/hidden-api/legacy-task/?type=SET_RECENT_UPDATE_DATES`;
-  } else if (RUN_ENV == 'local') {
+  } else if (RUN_ENV === 'local') {
     updatesURL = 'http://127.0.0.1:8000/hidden-api/legacy-task/?type=SET_RECENT_UPDATE_DATES';
   }
   const setState = await axios.get(updatesURL);
 
   const tasksList = [];
-  if (setState.data.status == 'DONE') {
+  if (setState.data.status === 'DONE') {
     const recentIndexDate = await cache.getKey('RECENT_INDEX_DATE');
     const recentOhlcvDate = await cache.getKey('RECENT_OHLCV_DATE');
     const recentBuysellDate = await cache.getKey('RECENT_BUYSELL_DATE');
@@ -345,24 +420,24 @@ app.get('/DAILY_CRAWL_ALL', async (req, res) => {
     console.log(`Recent Factor data update date: ${recentFactorDate}`);
     taskLog += ` Index: ${recentIndexDate} OHLCV: ${recentOhlcvDate} BuySell: ${recentBuysellDate} Factor: ${recentFactorDate}`;
 
-    if (recentIndexDate != mostCurrentDate) {
+    if (recentIndexDate !== mostCurrentDate) {
       tasksList.push('MASS_INDEX_CRAWL');
     }
 
-    if (recentOhlcvDate != mostCurrentDate) {
+    if (recentOhlcvDate !== mostCurrentDate) {
       tasksList.push('MASS_OHLCV_CRAWL');
     }
 
-    if (recentBuysellDate != mostCurrentDate) {
+    if (recentBuysellDate !== mostCurrentDate) {
       tasksList.push('MASS_BUYSELL_CRAWL');
     }
 
-    if (recentFactorDate != mostCurrentDate) {
+    if (recentFactorDate !== mostCurrentDate) {
       tasksList.push('MASS_FACTOR_CRAWL');
     }
   }
 
-  if (tasksList.length != 0) {
+  if (tasksList.length !== 0) {
     // only run task loop when there are data needed for update
     for (const task of tasksList) {
       fn = await massCrawlTask(req, res, fn, task);

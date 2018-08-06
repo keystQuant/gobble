@@ -33,7 +33,7 @@ class RedisClient {
   // regular set, get of single values
   async setKey(key, value) {
     const response = await this.redisClient.set(key, value);
-    if (response == 'OK') {
+    if (response === 'OK') {
       return true; // return true if key successfully set
     }
     return false; // return false if key failed to set
@@ -65,12 +65,12 @@ class RedisClient {
     // type can be: int, float, str etc.
     // all these types are so that Python app could use the data later on
     let response = await this.redisClient.lrange(key, 0, -1);
-    if (type == 'int') {
+    if (type === 'int') {
       // check if element of list contains integer value
       // if so, change the element type to int
       // else, since the function parseInt on that element will return NaN
       // simply skip the below condition block
-      if (!isNaN(parseInt(response[0]))) {
+      if (!isNaN(parseInt(response[0], 10))) {
         response = response.map(x => parseInt(x, 10));
       }
     }

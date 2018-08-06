@@ -32,6 +32,30 @@ class Processor {
     return datesData;
   }
 
+  async processKospiTickers() {
+    const kospiTickersData = ['kospi_tickers'];
+
+    for (const obj of this.data.Data) {
+      for (const jsonData of obj) {
+        kospiTickersData.push(jsonData.GICODE);
+      }
+    }
+
+    return kospiTickersData;
+  }
+
+  async processKosdaqTickers() {
+    const kosdaqTickersData = ['kosdaq_tickers'];
+
+    for (const obj of this.data.Data) {
+      for (const jsonData of obj) {
+        kosdaqTickersData.push(jsonData.GICODE);
+      }
+    }
+
+    return kosdaqTickersData;
+  }
+
   async processMassIndex(date) {
     const jsonDate = date;
 
@@ -65,7 +89,7 @@ class Processor {
         const jsonMashed = '{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}'.format(
           jsonDate,
           json.GICODE,
-          json.GINAME,
+          json.ITEMABBRNM,
           json.STRT_PRC,
           json.HIGH_PRC,
           json.LOW_PRC,

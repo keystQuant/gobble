@@ -8,11 +8,11 @@ class CacheLogger {
     const c = this.c;
 
     let logState = '';
-    if (state == 1) {
+    if (state === 1) {
       logState = 'DONE';
-    } else if (state == 0) {
+    } else if (state === 0) {
       logState = 'FAIL';
-    } else if (state == 2) {
+    } else if (state === 2) {
       logState = 'RUNNING';
     }
 
@@ -26,7 +26,7 @@ class CacheLogger {
     } else {
       const cachedLog = await c.getKey(key);
       const logList = cachedLog.split(',');
-      const taskNum = parseInt(logList[1]);
+      const taskNum = parseInt(logList[1], 10);
 
       if (noNumUpdate) {
         value = `${taskName},${String(taskNum)},${logState}`;
@@ -49,12 +49,12 @@ class CacheLogger {
 
     const cachedLog = await c.getKey(taskName);
     const logList = cachedLog.split(',');
-    const taskNum = parseInt(logList[1]);
+    const taskNum = parseInt(logList[1], 10);
 
     const key = `${taskName}:${String(taskNum)}`;
 
-    if (taskNum % 10 == 1) {
-      for (let i = 1; i < 11; i++) {
+    if (taskNum % 10 === 1) {
+      for (let i = 1; i < 11; i += 1) {
         const toDelTaskNum = String(taskNum - 1);
         const toDelKey = `${taskName}:${toDelTaskNum}`;
         const exists = await c.keyExists(toDelKey);
